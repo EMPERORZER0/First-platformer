@@ -6,6 +6,9 @@ TagManager:
   tags:
   - Traps
   - Walls
+  - Ledge
+  - Checkpoint
+  - Projectiles
   layers:
   - Default
   - TransparentFX
@@ -14,7 +17,7 @@ TagManager:
   - Water
   - UI
   - Floor
-  - Traps
+  - Enemies
   - Wall
   - 
   - 
@@ -40,6 +43,18 @@ TagManager:
   - 
   - 
   m_SortingLayers:
+  - name: BackgroundFar
+    uniqueID: 1321334907
+    locked: 0
+  - name: BackgroundNear
+    uniqueID: 3708317555
+    locked: 0
   - name: Default
     uniqueID: 0
+    locked: 0
+  - name: ForegroundFar
+    uniqueID: 770103133
+    locked: 0
+  - name: ForegroundNear
+    uniqueID: 121045965
     locked: 0

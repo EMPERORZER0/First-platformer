@@ -1,64 +1,74 @@
 using UnityEngine;
 
-public class PlayerController : MonoBehaviour
+public class LedgeHanging : MonoBehaviour
 {
-    public float jumpForce = 10f;
-    public float moveSpeed = 5f;
-    public LayerMask platformLayerMask;
-    public float cornerCorrectionBuffer = 0.2f;
+    public Transform ledgeDetector;
+    public LayerMask ledgeLayer;
+    public float detectionRadius = 0.2f;
+    public float hangingOffsetY = 1.0f;
+
+    private bool isHanging = false;
+    private Vector2 ledgePosition;
 
     private Rigidbody2D rb;
-    private BoxCollider2D boxCollider;
+    private Animator animator;
 
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
-        boxCollider = GetComponent<BoxCollider2D>();
+        animator = GetComponent<Animator>();
     }
 
     void Update()
     {
-        // Handle player movement
-        float horizontalInput = Input.GetAxis("Horizontal");
-        rb.velocity = new Vector2(horizontalInput * moveSpeed, rb.velocity.y);
-
-        // Handle jump input
-        if (Input.GetButtonDown("Jump") && IsGrounded())
+        if (!isHanging)
         {
-            rb.velocity = new Vector2(rb.velocity.x, jumpForce);
+            DetectLedge();
         }
 
-        // Handle corner correction during jump
-        if (!IsGrounded() && rb.velocity.y > 0)
+        if (isHanging)
         {
-            CorrectJumpCorner();
+            if (Input.GetKeyDown(KeyCode.Space)) // Key to climb up
+            {
+                ClimbUp();
+            }
         }
     }
 
-    bool IsGrounded()
+    void DetectLedge()
     {
-        RaycastHit2D raycastHit = Physics2D.BoxCast(boxCollider.bounds.center, boxCollider.bounds.size, 0f, Vector2.down, 0.1f, platformLayerMask);
-        return raycastHit.collider != null;
+        Collider2D ledgeInfo = Physics2D.OverlapCircle(ledgeDetector.position, detectionRadius, ledgeLayer);
+        if (ledgeInfo != null)
+        {
+            ledgePosition = ledgeInfo.transform.position;
+            StartHanging();
+        }
     }
 
-    void CorrectJumpCorner()
+    void StartHanging()
     {
-        Vector2 playerPos = transform.position;
-        Vector2 direction = rb.velocity.x > 0 ? Vector2.right : Vector2.left;
-        RaycastHit2D raycastHit = Physics2D.Raycast(playerPos, direction, cornerCorrectionBuffer, platformLayerMask);
+        isHanging = true;
+        rb.velocity = Vector2.zero; // Stop the player's movement
+        rb.isKinematic = true; // Disable physics for precise positioning
 
-        if (raycastHit.collider != null)
+        // Position the player at the ledge
+        transform.position = new Vector2(ledgePosition.x, ledgePosition.y - hangingOffsetY);
+    }
+
+    void ClimbUp()
+    {
+        isHanging = false;
+        rb.isKinematic = false; // Re-enable physics
+        rb.velocity = new Vector2(rb.velocity.x, 0); // Reset vertical velocity
+        // Add climbing up movement here, if needed
+    }
+
+    void OnDrawGizmosSelected()
+    {
+        if (ledgeDetector != null)
         {
-            Bounds platformBounds = raycastHit.collider.bounds;
-
-            if (Mathf.Abs(playerPos.x - platformBounds.min.x) < cornerCorrectionBuffer)
-            {
-                transform.position = new Vector2(platformBounds.min.x, transform.position.y);
-            }
-            else if (Mathf.Abs(playerPos.x - platformBounds.max.x) < cornerCorrectionBuffer)
-            {
-                transform.position = new Vector2(platformBounds.max.x, transform.position.y);
-            }
+            Gizmos.color = Color.red;
+            Gizmos.DrawWireSphere(ledgeDetector.position, detectionRadius);
         }
     }
 }
